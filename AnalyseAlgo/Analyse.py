@@ -13,18 +13,15 @@ def run_analysis():
         return
 
     try:
-        # Загружаем Excel через openpyxl с values_only=True
         wb = load_workbook(filename=file_path, data_only=True)
         sheet = wb.active  # Берём первый лист
         data = []
         for row in sheet.iter_rows(values_only=True):
             data.append(row)
 
-        # Преобразуем в DataFrame
         df = pd.DataFrame(data[1:], columns=data[0])
         df.columns = df.columns.str.strip()
 
-        # Проверяем обязательные колонки
         required_cols = ['Realized PNL', 'Fee', 'Pair', 'Type', 'AvgPrice', 'Time(UTC+8)']
         missing = [c for c in required_cols if c not in df.columns]
         if missing:
@@ -32,15 +29,13 @@ def run_analysis():
                                  f"В файле отсутствуют обязательные поля:\n{', '.join(missing)}")
             return
 
-        # Приведение числовых колонок к float (в том числе с точкой)
         numeric_cols = ['Realized PNL', 'Fee', 'AvgPrice']
         for col in numeric_cols:
-            df[col] = pd.to_numeric(df[col], errors='coerce')  # некорректные значения станут NaN
+            df[col] = pd.to_numeric(df[col], errors='coerce')  
 
         # Фильтруем Close Long
         df_open_long = df[df['Type'] == 'Close Long'].copy()
 
-        # Дата и месяц-год
         df_open_long['Time(UTC+8)'] = pd.to_datetime(df_open_long['Time(UTC+8)'], errors='coerce')
         df_open_long['TradeDate'] = df_open_long['Time(UTC+8)'].dt.date
         df_open_long['YearMonth'] = df_open_long['Time(UTC+8)'].dt.to_period('M')
@@ -112,3 +107,4 @@ text_box = scrolledtext.ScrolledText(window, width=110, height=35, font=("Consol
 text_box.pack()
 
 window.mainloop()
+
